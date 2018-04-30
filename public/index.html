@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+
+<script  src="https://code.jquery.com/jquery-1.12.4.js"  integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU="  crossorigin="anonymous"></script> 
+<link rel="stylesheet" href="css/styles.css">
+ 
+</head>
+
+<body>
+	<script>
+
+	$(document).ready(function(){
+    leer();
+     setInterval(leer, 10000);
+    
+  });
+  var viejosID=[];
+  var nuevoID=[]; 
+
+  var nuevosID=[];
+  var resultado = [];
+  var items_a_eliminar = [];
+  var contador=0;  
+
+function leer() { 
+
+    leer_json_facebook();
+
+    function leer_json_facebook(){
+      
+        $.ajax({
+          url: "https://graph.facebook.com/v2.12/Javier.Aliaga.Rodriguez?fields=feed{description,picture,permalink_url,full_picture,comments},likes,description&access_token=EAACEdEose0cBAG6DD6xad1OBVHccx8UAdSCNZBdPWfqJa12DYVwOVWo4MqfbMEs2Is1EBlUwEMRNcAh8T7uLT6bE2lCZCzSuHfehp21Bd99mWFqK5xGEiHhHZCUquTAZBzqNYjZCg8MieREXTcEJnS3eQpHXZAuHmFb7qN68NZAjEYC0xhdRzJMGqmJgNJRT7cZD",
+          jsonp: "callback",
+          dataType: "jsonp",        
+          success: function(response){
+            respuestaAJAX(response);
+            console.log(response); 
+        }
+      });
+    } //cierre del ajax
+
+    function respuestaAJAX(response){
+
+       // variable para saber si pintar
+        var volverApintar;
+
+        // recorremos el json y guardamos los id 
+        if (1>viejosID.length){
+          //console.log("rellenamos");
+          for (var i = 0; i < response['feed']['data'].length; i++) {
+              viejosID.push(response['feed']['data'][i]['id']);
+          }
+        }else {
+
+        // borramos el array
+          while(nuevosID.length) {
+              nuevosID.pop();
+          }
+          // rellenamos el array de nuevos para poder comparar
+          for (var i = 0; i < response['feed']['data'].length; i++) {
+              nuevosID.push(response['feed']['data'][i]['id']);
+              
+          }
+          // guardamos el return de la funcion para tomar la decisión
+          volverApintar=comparar();  
+        }
+        
+        
+        //console.log("volverApintar "+volverApintar);
+        if (!volverApintar)
+          pintar(response);
+       
+    }
+    
+    
+    
+		function comparar(){
+      
+     /* console.log("nuevos \n "+nuevosID);
+      console.log("viejos \n "+viejosID);
+      console.log("--------------------------------");
+      */
+      //limpiamos array
+      while(items_a_eliminar.length) {
+              items_a_eliminar.pop();
+      }
+
+      if (viejosID.length==nuevosID.length){
+  		  $.each(viejosID, function(i, val){ 
+  	    	  if($.inArray(val, nuevosID) < 0){
+                contador++;
+  		          items_a_eliminar.push(val); 
+                //console.log("diferencias =>"+val)
+  		      }
+  		  });
+        //si la longuitud es distinta
+      }else {
+          $.each(viejosID, function(i, val){
+            if($.inArray(val, nuevosID) < 0){
+                items_a_eliminar.push(val); 
+                //console.log("diferencias =>"+val)
+            }
+        });
+      }
+      //console.log("ID´s a eliminar \n"+items_a_eliminar);
+	    borrarVariorsElementosArray(items_a_eliminar);
+      //console.log(resultado);
+
+      if (0==items_a_eliminar.length)
+        resultado=true;
+      else 
+        resultado=false;
+      
+      console.log("resultado==> "+resultado)
+      return resultado;
+	    
+		}
+  
+		//la mejor manera para realizar un borrado múltiple de un Array debe ser de esta maner
+		// eliminamos desde el final 
+  	function borrarVariorsElementosArray(items_a_eliminar){
+        for(var i = 0; i<items_a_eliminar.length ;i++){
+		    		console.log('borramos \n'+ items_a_eliminar[i]);
+		    		$('#'+items_a_eliminar[i]).remove();
+            
+		    }
+        if (0<items_a_eliminar.length)
+		      anadirNuevos();
+       
+		} 
+   
+
+    // añadimos los nuevos
+		function anadirNuevos(){
+			//recorrremos cuantos haya que eliminar y añadimos del array nuevosID JSON
+        //console.log("para borrar=> "+items_a_eliminar);
+        //console.log("estos son los viejos "+viejosID);
+  			items_a_eliminar.forEach( function(elemento, index) {
+            viejosID.unshift(nuevosID[index]);
+            viejosID.pop(items_a_eliminar[index]);
+            
+            //console.log("aaaaaaaaaaaaaaaaa" + viejosID.length);
+        });
+
+    }
+
+    function pintar (response){
+       if(nuevosID.length==0){
+        //primer evento y se imprimen todos
+        //console.log('esto hay que pintar ' + response);
+          
+            for (var i=0;i<response['feed']['data'].length;i++){
+              var ainsertar = '';
+            
+              if (response['feed']['data'][i]['id'])
+
+              {
+                // ainsertar+="<div id='"+response['feed']['data'][i]['id']+"'></div>";
+                ainsertar+="<div id='"+response['feed']['data'][i]['id']+"'>";
+                //console.log("id =>>>>> "+response['feed']['data'][i]['id']);
+              }
+
+              if (response['feed']['data'][i]['full_picture'])
+              {
+
+                ainsertar+="<img class='img-fluid' src="+response['feed']['data'][i]['full_picture']+">";
+              }
+
+              if (response['feed']['data'][i]['message'])
+
+              {
+
+                ainsertar+='<p>'+response['feed']['data'][i]['message']+'</p>';
+
+              }
+
+              if (response['feed']['data'][i]['description'])
+
+              {
+                //console.log('hay description ' +response['feed']['data'][i]['description'])
+                ainsertar+='<h5>'+response['feed']['data'][i]['description']+'</h5>';
+
+              }
+
+              if (response['feed']['data'][i]['comments'])
+
+              {
+
+                comentarios = response['feed']['data'][i]['comments']['data'].length;
+
+                var listarComentarios='';
+
+                for(var k=0;k<comentarios;k++){
+
+                  var fechaComentario = response['feed']['data'][i]['comments']['data'][k]['created_time'];
+                  var dt = new Date(fechaComentario);
+                  //extraemos el día mes y año
+                  var dia = dt.getDate();
+                  var mes = parseInt(dt.getMonth()) + 1;
+                  var ano = dt.getFullYear();
+                  var horas = dt.getHours();
+                  var minutos = dt.getMinutes();
+                  //escribimos la fecha en un formato legible
+                  listarComentarios+='<div class="indivualComentario"><p class="fecha">'+dt.toLocaleString('es-ES', { hour: 'numeric', minute: 'numeric', hour12: true })+'</p><p class="comentarios">'+response['feed']['data'][i]['comments']['data'][k]['message']+'</p></div>';
+
+                  // comentarios anidados
+                  if (response['feed']['data'][i]['comments']){
+                    for(var j=0;j<comentarios;j++){
+
+                    }
+                  } // fin de comentarios anidados
+              } 
+                ainsertar+=listarComentarios;
+
+              }else {
+                //console.log("NOOOOOOOOOOOOOOO hay comentarios en este post");
+              }
+
+              ainsertar+='<hr>';
+              jQuery('.facebookLista').append(ainsertar);
+            }
+          
+       } else {
+
+            //console.log('hay nuevosID');
+            //cuando se han ido actualizando, sólo agregar los nuevos
+            for (var i=0;i<contador;i++){
+                  if (response['feed']['data'][i]['id']){
+                    var ainsertar = '';
+                    ainsertar+="<div class='"+response['feed']['data'][i]['id']+"'>";
+                  }
+
+                  if (response['feed']['data'][i]['full_picture']){
+                    ainsertar+="<img class='img-fluid' src="+response['feed']['data'][i]['full_picture']+">";
+                  }
+                  jQuery('.facebookLista').prepend(ainsertar);
+              
+            }
+          
+       }//cierre del else
+    }
+}
+          
+
+      
+
+
+</script>	 
+
+<div class="container">
+  <div class="row">
+    <div class="col-md">
+
+    	<h1>Feed de facebook </h1>
+      <div class="facebookLista">  </div>
+     
+    </div>
+  </div>
+</div>
+</body>
+</html>

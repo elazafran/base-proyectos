@@ -1,0 +1,1 @@
+var sumar=function(r,n){return r+n};

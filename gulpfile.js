@@ -3,7 +3,7 @@
  */
 
 var gulp = require("gulp");
-var sass = require("npm install gulp-sass --save-dev");
+var sass = require("gulp-sass");
 var connect = require("gulp-connect");
 var uglify = require("gulp-uglify");
 var concat = require("gulp-concat");
